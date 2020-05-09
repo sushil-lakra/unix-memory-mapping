@@ -15,6 +15,7 @@ namespace mm {
     mem_mapper* mem_mapper::instance_ = nullptr;
     namespace {
         uint32_t page_size_;
+        int fd_;
     }
 
     mem_mapper::mem_mapper() {}
@@ -73,25 +74,35 @@ namespace mm {
     char*
     mem_mapper::map(const char* filepath, uint32_t sz) {
         int mode = 0x0777;
-        auto fd = open(filepath, O_RDWR | O_CREAT, mode);
+        auto fd_ = open(filepath, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 
-        if (fd < 0) {
+        if (fd_ < 0) {
             perror("Failed to open file");
             return nullptr;
         }
-
+        
         sz = sz / page_size_ * page_size_;
+        if (lseek(fd_, sz, SEEK_SET) == -1) {
+            perror("Failed to seek");
+            return nullptr;
+        }
+
+        if (write(fd_, "", 1) == -1) {
+            perror("Failed to write");
+            return nullptr;
+        }
 
         std::cout << sz <<std::endl;
         char* buf = static_cast<char*>(
             mmap(0,
                 sz,
                 PROT_READ | PROT_WRITE,
-                MAP_PRIVATE,
-                fd,
+                MAP_SHARED,
+                fd_,
                 0
             )
         );
+
         if (buf == MAP_FAILED) {
             perror("Failed to map file");
             return nullptr;
@@ -100,6 +111,10 @@ namespace mm {
     }
     void
     mem_mapper::unmap(char* ref, uint32_t sz) {
-
+        if (munmap(ref, sz) == -1) {
+            perror("Unable to unmap_file");
+        }
+        close(fd_);
+        return;
     }
 }

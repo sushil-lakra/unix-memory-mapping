@@ -45,6 +45,9 @@ void memory_mapper_tests() {
     for (int i = 0; i < 1000; ++i) {
         buf[i] = '1';
     }
+    
+    std::cout << "buf : " << size_t(buf) << std::endl;
+    MM_INSTANCE.unmap(buf, MM_INSTANCE.granularity() * 10);
 }
 
 char* shmget_addr() {
@@ -71,7 +74,7 @@ char* shmget_addr() {
     for (int i = 0; i < mem_size; ++i) {
         ptr[i] = 'a';
     }
-
+    
     //read and verify
     for (int i = 0; i < mem_size; ++i) {
         if (ptr[i] != 'a') {
@@ -88,6 +91,7 @@ not found - sudo apt-get install libcap-dev
 note: capabilities are user specific, most prbably running this with normal user wont be sufficient,
 because user can't give additional privileges to himself.
 */
+/*
 #include <sys/capability.h>
 void set_required_capabilities() {
     cap_t caps;
@@ -110,6 +114,7 @@ void set_required_capabilities() {
         << "\" size = " << size << std::endl;
 
 }
+*/
 
 void process_mem_usage()
 {
